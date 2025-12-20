@@ -1,24 +1,33 @@
 pipeline {
     agent any
 
-    environment {
-        ANSIBLE_CONFIG = "${WORKSPACE}/ansible/ansible.cfg"
-    }
-
     stages {
 
         stage('Checkout Code') {
             steps {
-                echo 'Cloning GitHub repository'
-                git branch: 'main',
-                    url: 'https://github.com/Induja1408/CI-CD-Test.git'
+                echo '📥 Checking out source code'
+                checkout scm
+            }
+        }
+
+        stage('Install Ansible (if not present)') {
+            steps {
+                sh '''
+                if ! command -v ansible >/dev/null 2>&1; then
+                  echo "🔧 Installing Ansible"
+                  apt-get update
+                  apt-get install -y ansible
+                else
+                  echo "✅ Ansible already installed"
+                fi
+                '''
             }
         }
 
         stage('Verify Ansible') {
             steps {
                 sh '''
-                echo "Checking Ansible version"
+                echo "🔍 Ansible version"
                 ansible --version
                 '''
             }
@@ -27,7 +36,7 @@ pipeline {
         stage('Run Ansible Playbook') {
             steps {
                 sh '''
-                echo "Running Ansible playbook on EC2"
+                echo "🚀 Running Ansible playbook"
                 cd ansible
                 ansible-playbook -i inventory.ini playbook.yml
                 '''
